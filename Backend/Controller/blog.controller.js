@@ -29,7 +29,10 @@ export const createBlog = async (req, res) => {
     await newBlog.save();
     res.status(201).json({ message: "Blog created successfully", blog: newBlog });
   } catch (error) {
-    res.status(500).json({ message: "Error creating blog", error });
+    console.error("Error during create blog:", error);
+    return res.status(500).json({
+      message: "Something went wrong. Please try again later"
+    });
   }
 };
 
@@ -46,9 +49,25 @@ export const getAllBlogs = async (req, res) => {
       }
       return { ...blog._doc, picture: pictureData };
     });
-   
-    res.status(200).json({message: "Blogs fetched successfully", blogs: blogsWithImages});
+
+    res.status(200).json({ message: "Blogs fetched successfully", blogs: blogsWithImages });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching blogs", error });
+    console.error("Error during getting all blogs:", error);
+    return res.status(500).json({
+      message: "Something went wrong. Please try again later"
+    });
+  }
+}
+
+export const getBlogById = async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.id);
+    if (!blog) return res.status(404).json({ message: "Blog not found" });
+    res.status(200).json({ message: "Blog fetched successfully", blog });
+  } catch (error) {
+    console.error("Error during getting blog by id:", error);
+    return res.status(500).json({
+      message: "Something went wrong. Please try again later"
+    });
   }
 };

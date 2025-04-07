@@ -160,7 +160,7 @@ export const varifyEmail = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Error during forgot password OTP request:", error);
+    console.error("Error during varify email:", error);
     return res.status(500).json({
       message: "Something went wrong. Please try again later",
     });
