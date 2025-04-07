@@ -1,4 +1,4 @@
-import Blog from "../models/Blog.js";
+import Blog from "../Models/blog.js";
 import multer from "multer";
 
 // Multer setup
