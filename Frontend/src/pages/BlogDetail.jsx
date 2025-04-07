@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, data } from "react-router-dom";
 import axios from "axios";
-import GlobalContext from "../context/GlobalContext"; // Corrected import
-import { FaEdit, FaTrash } from "react-icons/fa"; // Importing icons from react-icons
+import GlobalContext from "../context/GlobalContext";
+import { FaEdit, FaTrash, FaUpload } from "react-icons/fa";
 
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 
@@ -21,8 +21,8 @@ const BlogDetail = () => {
                 const response = await axios.get(`${BASE_URL}/blog/${id}`); // Adjusted endpoint
                 setBlog(response.data?.blog);
                 setFormData({
-                    title: response.data.blog.title,
-                    description: response.data.blog.description,
+                    title: response.data?.blog?.title,
+                    description: response?.data?.blog?.description,
                 });
             } catch (error) {
                 console.error("Error fetching blog:", {
@@ -57,16 +57,22 @@ const BlogDetail = () => {
         if (formData.picture) data.append("picture", formData.picture);
 
         try {
-            const response = await axios.put(`${BASE_URL}/api/blog/${id}`, data, {
+            const response = await axios.put(`${BASE_URL}/update-blog/${id}`, data, {
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
                     "Content-Type": "multipart/form-data",
+                    Authorization: localStorage.getItem("token"),
                 },
             });
-            setBlog(response.data.blog);
+            alert(response?.data?.message);
+            setBlog(response?.data?.blog);
             setIsEditing(false);
+            navigate("/"); 
         } catch (error) {
-            console.error("Error updating blog:", error.response?.data || error.message);
+            alert(error.response?.data?.message);
+            console.error("Error fetching blog:", {
+                message: error.response?.data?.message || error.message,
+                status: error.response?.status || "unknown error",
+            })
         }
     };
 
@@ -74,12 +80,19 @@ const BlogDetail = () => {
     const handleDelete = async () => {
         if (window.confirm("Are you sure you want to delete this blog?")) {
             try {
-                await axios.delete(`${BASE_URL}/api/blog/${id}`, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                const response = await axios.delete(`${BASE_URL}/delete-blog/${id}`, {
+                    headers: {
+                        Authorization: localStorage.getItem("token"),
+                    }
                 });
+                alert(response?.data?.message);
                 navigate("/"); // Redirect to home after deletion
             } catch (error) {
-                console.error("Error deleting blog:", error.response?.data || error.message);
+                alert(error.response?.data?.message);
+                console.error("Error fetching blog:", {
+                    message: error.response?.data?.message || error.message,
+                    status: error.response?.status || "unknown error",
+                })
             }
         }
     };
@@ -87,7 +100,7 @@ const BlogDetail = () => {
     if (!blog) return <p>Loading...</p>;
 
     return (
-        <div className="p-0 sm:p-4">
+        <div className="p-0 sm:p-4 mb-12">
             {/* Blog Image */}
             <img
                 src={
@@ -103,37 +116,75 @@ const BlogDetail = () => {
             {!isEditing && (
                 <div className="px-2 sm:px-6 xl:px-12 2xl:px-20">
                     <h1 className="text-3xl font-bold text-center mb-2">{blog.title}</h1>
-                    <p className="text-gray-700 mb-4">{blog.description}</p>
+                    <p className="text-gray-700 mb-4">About Blog: {blog.description}</p>
                     <p className="text-sm text-gray-500">Created by: {blog.name}</p>
                 </div>
             )}
 
             {/* Edit Mode (if owner) */}
             {isOwner && isEditing && (
-                <form onSubmit={handleUpdate} className="space-y-4">
-                    <div>
-                        <label className="block text-gray-700">Title</label>
+                <form onSubmit={handleUpdate} className="space-y-4 px-2 sm:px-6 xl:px-12 2xl:px-20">
+                    {/* Title */}
+
+                    {/* Title */}
+                    <div className="mb-4">
+                        <label className="block text-gray-700 mb-2" htmlFor="title">
+                            Title
+                        </label>
                         <input
-                            type="text"
                             name="title"
+                            type="text"
+                            id="title"
                             value={formData.title}
                             onChange={handleChange}
-                            className="w-full p-2 border rounded"
+                            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Enter blog title"
+                            required
                         />
                     </div>
-                    <div>
-                        <label className="block text-gray-700">Description</label>
+
+                    {/* Description */}
+                    <div className="mb-4">
+                        <label className="block text-gray-700 mb-2" htmlFor="description">
+                            Description
+                        </label>
                         <textarea
                             name="description"
+                            id="description"
                             value={formData.description}
                             onChange={handleChange}
-                            className="w-full p-2 border rounded"
+                            className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            rows="4"
+                            placeholder="Write your blog content here"
+                            required
                         />
                     </div>
-                    <div>
-                        <label className="block text-gray-700">Image</label>
-                        <input type="file" name="picture" onChange={handleImageChange} />
+
+                    {/* Image */}
+
+                    <div className="mb-4">
+                        <label className="block text-gray-700 mb-2" htmlFor="image">
+                            Upload Image
+                        </label>
+                        <div className="flex items-center gap-4">
+                            <input
+                                name="picture"
+                                type="file"
+                                id="image"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                className="hidden"
+                            />
+                            <label
+                                htmlFor="image"
+                                className="cursor-pointer bg-blue-500 text-white p-2 rounded hover:bg-blue-600 flex items-center gap-2"
+                            >
+                                <FaUpload /> Upload Image
+                            </label>
+                        </div>
                     </div>
+
+
                     <button type="submit" className="bg-blue-500 text-white p-2 rounded">
                         Save Changes
                     </button>
@@ -166,7 +217,7 @@ const BlogDetail = () => {
                     </button>
                 </div>
             )}
-        </div>
+        </div> 
     );
 };
 
